@@ -1,6 +1,6 @@
 {
   "name": "@gasbuddy/swagger-csharp-client",
-  "version": "8.0.0",
+  "version": "1.0.0",
   "description": "A tool that generates a c# client from the Swagger specification from a GB api or service repo",
   "private": true,
   "main": "build/index.js",
@@ -12,18 +12,16 @@
     "prepublish": "npm run build",
     "lint": "eslint .",
   },
-  "keywords": [],
+  "keywords": ["swagger", "client"],
   "author": "GasBuddy <developers@gasbuddy.com>",
   "license": "UNLICENSED",
   "dependencies": {
     "@gasbuddy/swagger-ref-resolver": "^1.1.2",
     "@swagger-api/swagger-codegen": "^2.2.1",
-    "@gasbuddy/gb-services": "^8",
     "bluebird": "^3.4.6",
     "winston": "^2.1.1"
   },
   "devDependencies": {
-    "@gasbuddy/gb-services-tester": "^4",
     "babel-cli": "^6.9.0",
     "babel-preset-gasbuddy": "^1",
     "babel-register": "^6.3.13",
