@@ -1,0 +1,77 @@
+# See similar services' wercker.yml for examples of setting up
+# dependencies like databases, consul, redis, etc.
+# Generally, you should allow mocking of other microservices,
+# but personally I don't mind using real infrastrcture components
+# like postgres in unit tests
+box: node
+
+build:
+  services:
+    - djmax/logstashd
+
+  steps:
+    - script:
+      name: set NODE_ENV to ci and cleanup node_modules for wercker command line
+      code: |
+        export NODE_ENV=ci
+        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        rm -rf ./node_modules
+
+    - npm-install
+
+    - script:
+      name: create service env vars
+      code: |
+        export LOGSTASH_URL=log://$LOGSTASHD_PORT_9999_TCP_ADDR:$LOGSTASHD_PORT_9999_TCP_PORT/
+
+    - script:
+      name: lint
+      code: npm run lint
+
+    - script:
+      name: build
+      code: npm run build
+
+    - script:
+      name: record build info
+      code: |
+        echo BUILD_ID=$WERCKER_BUILD_ID > BUILD_INFO
+        echo BUILD_URL=$WERCKER_BUILD_URL >> BUILD_INFO
+        echo HASH=$WERCKER_GIT_COMMIT >> BUILD_INFO
+        echo $WERCKER_BUILD_ID > WERCKER_BUILD_ID
+
+ecr-deploy:
+  box:
+    id: gasbuddy/node-app:6-production
+    cmd: /bin/sh
+
+  steps:
+    - script:
+      name: Clean dev content and setup environment
+      code: |
+        export NODE_ENV=production
+        export AWS_ECR_TAG=$(cat WERCKER_BUILD_ID)_$WERCKER_GIT_COMMIT
+        rm -rf node_modules/.bin
+        npm prune
+        rm -f ~/.npmrc
+        rm -rf src
+        rm -rf tests
+        rm -f config/development.json
+
+    - internal/docker-push:
+        aws-access-key: $AWS_ACCESS_KEY_ID
+        aws-secret-key: $AWS_SECRET_ACCESS_KEY
+        aws-region: $AWS_REGION
+        aws-registry-id: $AWS_REGISTRY_ID
+        repository: api-starter-kit
+        tag: $AWS_ECR_TAG
+        cmd: node-app
+
+publish-client:
+  steps:
+    - script:
+      name: npm publish
+      code: |
+        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        cd api
+        npm publish . --tag latest
