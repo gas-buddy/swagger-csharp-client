@@ -2,10 +2,6 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import mustache from 'mustache';
 
-const updateGitArg = process.argv[2];
-const repoNameArg = process.argv[3];
-const clientRepoNameArg = process.argv[4];
-
 // Clones and builds the codegen repo so it can be used locally
 function cloneCodegen() {
   if (!fs.existsSync('./../swagger-codegen')) {
@@ -196,4 +192,24 @@ function generate(repoName, clientRepoName, updateGit) {
   }
 }
 
-generate(repoNameArg, clientRepoNameArg, updateGitArg === 'true');
+// Validate the command line args; return true if valid, show usage on console otherwise
+function validCommandLineArgs() {
+  if (process.argv.length !== 5 || (process.argv[2] !== 'folder' && process.argv[2] !== 'repo')) {
+    // eslint-disable-next-line no-console
+    console.log('Usage: generate-client:[repo|folder] [api-repo-name] [client-repo-name|client-folder-name]');
+    return false;
+  }
+  return true;
+}
+
+// Generate an api client from the command line args
+function generateFromCommandLineArgs() {
+  if (validCommandLineArgs()){
+    const mode = process.argv[2];
+    const repoNameArg = process.argv[3];
+    const clientRepoNameArg = process.argv[4];
+    generate(repoNameArg, clientRepoNameArg, mode === 'repo');
+  }
+}
+
+generateFromCommandLineArgs();
