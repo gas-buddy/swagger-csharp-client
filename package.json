@@ -14,12 +14,16 @@
     "generate-client": "babel-node src/generate.js",
     "swagger-pack": "swagger-pack ./temp/repo/url-tracking-api/api/url-tracking-api.json > ./temp/swagger/url-tracking-api/url-tracking-api.json"
   },
-  "keywords": ["swagger", "client"],
+  "keywords": [
+    "swagger",
+    "client"
+  ],
   "author": "GasBuddy <developers@gasbuddy.com>",
   "license": "UNLICENSED",
   "dependencies": {
     "@gasbuddy/swagger-ref-resolver": "^1.1.2",
     "bluebird": "^3.4.6",
+    "mustache": "^2.3.0",
     "winston": "^2.1.1"
   },
   "devDependencies": {

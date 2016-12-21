@@ -1,5 +1,6 @@
 import childProcess from 'child_process';
 import fs from 'fs';
+import mustache from 'mustache';
 
 const repoNameArg = process.argv[2];
 const outputDirectoryArg = process.argv[3];
@@ -17,9 +18,8 @@ function cloneCodegen() {
 function cloneRepoApi(repoName) {
   let script = fs.readFileSync('./src/templates/gitClone.sh.mustache', 'utf-8');
 
-  script = script.replace(/{{repoName}}/gi, repoName);
   const repoDirectory = `./temp/repo/${repoName}`;
-  script = script.replace(/{{repoDirectory}}/gi, repoDirectory);
+  script = mustache.render(script, { repoName, repoDirectory });
 
   const scriptFolder = './temp';
   if (!fs.existsSync(scriptFolder)) {
@@ -84,7 +84,7 @@ function generateClient(repoName, swaggerFilePath, outputDirectory) {
   childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerFilePath}   -l csharp   -o ${outputDirectory}/${packageName} --additional-properties packageName=${packageName} -t ./src/templates`);
 
   let appConfig = fs.readFileSync('./src/templates/app_test.config.mustache', 'utf-8');
-  appConfig = appConfig.replace(/{{packageName}}/gi, packageName);
+  appConfig = mustache.render(appConfig, { packageName });
   fs.writeFileSync(`${outputDirectory}/${packageName}/src/${packageName}.Test/app.config`, appConfig);
 }
 
