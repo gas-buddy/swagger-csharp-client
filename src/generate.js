@@ -133,13 +133,13 @@ function commitClient(apiName, clientDirectory, commitId) {
 }
 
 // Generate the client code for the swagger doc
-function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, updateGit) {
+function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode) {
   const commitId = getApiCommitId(repoDirectory);
   const branchName = `auto-generated-commit#${commitId}`;
 
   const outputDirectory = `./../${clientRepoName}`;
 
-  if (updateGit) {
+  if (mode === 'repo') {
     checkoutClient(clientRepoName, outputDirectory, branchName);
   }
 
@@ -153,7 +153,7 @@ function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName
   appConfig = mustache.render(appConfig, { packageName });
   fs.writeFileSync(`${outputDirectory}/src/${packageName}.Test/app.config`, appConfig);
 
-  if (updateGit) {
+  if (mode === 'repo') {
     // eslint-disable-next-line no-console
     console.log(`Pushing branch https://github.com/gas-buddy/${clientRepoName}/tree/${branchName}...`);
     commitClient(repoName, outputDirectory, commitId);
@@ -176,19 +176,19 @@ function deleteFolderRecursive(path) {
 }
 
 // Generates a csharp client from a repo
-function generate(repoName, clientRepoName, updateGit) {
+function generate(repoName, clientRepoName, mode) {
   if (repoName && clientRepoName) {
     cloneCodegen();
     const repoDirectory = cloneRepoApi(repoName);
     const swaggerFilePath = collateSwagger(repoName, repoDirectory);
-    generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, updateGit);
+    generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode);
     deleteFolderRecursive('./temp');
 
     // eslint-disable-next-line no-console
     console.log(`Succesffully updated ${clientRepoName}`);
   } else {
     // eslint-disable-next-line no-console
-    console.log('You must specify an api repository name and a client respository name');
+    console.log('You must specify an api-repo-name and a client-repo-name/client-folder-name');
   }
 }
 
@@ -208,7 +208,7 @@ function generateFromCommandLineArgs() {
     const mode = process.argv[2];
     const repoNameArg = process.argv[3];
     const clientRepoNameArg = process.argv[4];
-    generate(repoNameArg, clientRepoNameArg, mode === 'repo');
+    generate(repoNameArg, clientRepoNameArg, mode);
   }
 }
 

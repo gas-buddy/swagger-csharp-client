@@ -11,7 +11,33 @@ There are two main reasons why we need this tool.
 
 ## Requirements
 
-This tool requires `maven`, which can be downloaded here: http://maven.apache.org/
+This tool requires `maven`, which can be downloaded here: http://maven.apache.org/download.cgi
+
+To install maven
+1. Download the binary installation file
+2. Extract the binary file to the folder you want to run maven from
+3. Add the bin directory of the created directory apache-maven-3.3.9 to the PATH environment variable
+4. Run the following to check for JAVE_HOME environment variable
+```
+echo %JAVA_HOME%
+```
+5. If the previous returns blank you need to create a JAVA_HOME environment variable to C:\Program Files\Java\jdk1.7.0_51 on windows or /Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home on Mac OS
+6. To confirm maven is working run the following in a new shell:
+
+```
+mvn -v
+```
+
+The result should look similar to
+
+```
+Apache Maven 3.3.3 (7994120775791599e205a5524ec3e0dfe41d4a06; 2015-04-22T04:57:37-07:00)
+Maven home: /opt/apache-maven-3.3.3
+Java version: 1.8.0_45, vendor: Oracle Corporation
+Java home: /Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home/jre
+Default locale: en_US, platform encoding: UTF-8
+OS name: "mac os x", version: "10.8.5", arch: "x86_64", family: "mac"
+```
 
 ## Clone and Install
 
