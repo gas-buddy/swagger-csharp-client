@@ -14,5 +14,7 @@ This tool requires maven(http://maven.apache.org/) to be installed on your compu
 git clone git@github.com:gas-buddy/swagger-csharp-client.git
 cd swagger-csharp-client
 npm install
-npm run generate-client REPONAME OUTPUTFOLDER
+npm run generate-client [ApiRepoName] [ClientRepoFolder]
 ```
+
+The last step will take several minutes the first time you run it as it needs to clone and build swagger-codegen.
