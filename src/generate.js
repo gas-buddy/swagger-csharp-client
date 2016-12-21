@@ -4,6 +4,15 @@ import fs from 'fs';
 const repoNameArg = process.argv[2];
 const outputDirectoryArg = process.argv[3];
 
+// Clones and builds the codegen repo so it can be used locally
+function cloneCodegen() {
+  if (!fs.existsSync('./../swagger-codegen')) {
+    // eslint-disable-next-line no-console
+    console.log('Building codegen...');
+    childProcess.execSync('sh ./src/cloneCodegen.sh');
+  }
+}
+
 // Create script to clone repo api spec
 function cloneRepoApi(repoName) {
   let script = fs.readFileSync('./src/templates/gitClone.sh.mustache', 'utf-8');
@@ -97,6 +106,7 @@ function deleteFolderRecursive(path) {
 // Generates a csharp client from a repo
 function generate(repoName, outputDirectory) {
   if (repoName && outputDirectory) {
+    cloneCodegen();
     const repoDirectory = cloneRepoApi(repoName);
     const swaggerFilePath = collateSwagger(repoName, repoDirectory);
     generateClient(repoName, swaggerFilePath, outputDirectory);
