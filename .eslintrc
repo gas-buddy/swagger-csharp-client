@@ -1,3 +1,4 @@
 {
-  "extends": "gasbuddy" 
+  "parser": "babel-eslint",
+  "extends": "gasbuddy"
 }

@@ -47,7 +47,7 @@
     {{#hasOnlyReadOnly}}
         [JsonConstructorAttribute]
     {{/hasOnlyReadOnly}}
-        public {{classname}}({{#readWriteVars}}{{{datatypeWithEnum}}}{{#isEnum}}{{^isContainer}}?{{/isContainer}}{{/isEnum}} {{name}} = null{{^-last}}, {{/-last}}{{/readWriteVars}})
+        public {{classname}}({{#readWriteVars}}{{{datatypeWithEnum}}} {{name}} = default({{{datatypeWithEnum}}}){{^-last}}, {{/-last}}{{/readWriteVars}})
         {
             {{#vars}}
             {{^isReadOnly}}
@@ -84,7 +84,7 @@ this.{{name}} = {{name}};
             {{/isReadOnly}}
             {{/vars}}
         }
-        
+
         {{#vars}}
         {{^isEnum}}
         /// <summary>
@@ -109,7 +109,7 @@ this.{{name}} = {{name}};
             sb.Append("}\n");
             return sb.ToString();
         }
-  
+
         /// <summary>
         /// Returns the JSON string presentation of the object
         /// </summary>

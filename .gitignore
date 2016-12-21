@@ -1,8 +1,7 @@
 # Custom
 .transpiled
-.nyc_output
-api/*-spec.json
 yarn.lock
+temp/*
 
 # Wercker
 .wercker
