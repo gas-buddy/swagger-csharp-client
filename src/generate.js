@@ -14,12 +14,12 @@ function createFileFromTemplate(templatePath, outputPath, viewModel) {
 function cloneCodegen() {
   if (!fs.existsSync('./../swagger-codegen')) {
     // eslint-disable-next-line no-console
-    console.log('Cloning codegen...');
+    console.log('Cloning swagger-codegen...');
     childProcess.execSync('sh ./src/cloneCodegen.sh');
   }
   if (!fs.existsSync('./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar')) {
     // eslint-disable-next-line no-console
-    console.log('Building codegen...');
+    console.log('Building swagger-codegen...');
     childProcess.execSync('sh ./src/buildCodegen.sh');
   }
 }
@@ -95,7 +95,7 @@ function cloneClient(repoName, repoDirectory) {
 // Pulls the client repo to ensure it is up to date
 function pullClient(repoName, repoDirectory) {
   // eslint-disable-next-line no-console
-  console.log(`Getting latest on ${repoName}...`);
+  console.log(`Pulling master from ${repoName}...`);
 
   const scriptPath = './temp/pullClient.sh';
   createFileFromTemplate('./src/templates/pullClient.sh.mustache', scriptPath, { repoDirectory });
@@ -177,7 +177,7 @@ function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName
     setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion);
 
     // eslint-disable-next-line no-console
-    console.log(`Pushing commit to https://github.com/gas-buddy/${clientRepoName}`);
+    console.log(`Pushing commit to https://github.com/gas-buddy/${clientRepoName} ...`);
     commitClient(repoName, outputDirectory, commitId, apiVersion);
   }
 }
@@ -209,16 +209,18 @@ function generate(repoName, clientRepoName, mode) {
     // eslint-disable-next-line no-console
     console.log(`Succesffully updated ${clientRepoName}`);
   } else {
-    // eslint-disable-next-line no-console
-    console.log('You must specify an api-repo-name and a client-repo-name/client-folder-name');
+    showUsage();
   }
 }
 
-// Validate the command line args; return true if valid, show usage on console otherwise
+function showUsage() {
+  // eslint-disable-next-line no-console
+  console.log('Usage: generate-client:[repo|folder] [api-repo-name] [client-repo-name|client-folder-name]');
+}
+
+// Are the command line args valid?
 function validCommandLineArgs() {
   if (process.argv.length !== 5 || (process.argv[2] !== 'folder' && process.argv[2] !== 'repo')) {
-    // eslint-disable-next-line no-console
-    console.log('Usage: generate-client:[repo|folder] [api-repo-name] [client-repo-name|client-folder-name]');
     return false;
   }
   return true;
@@ -231,6 +233,8 @@ function generateFromCommandLineArgs() {
     const repoNameArg = process.argv[3];
     const clientRepoNameArg = process.argv[4];
     generate(repoNameArg, clientRepoNameArg, mode);
+  } else {
+    showUsage();
   }
 }
 
