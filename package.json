@@ -11,7 +11,8 @@
     "build": "babel src/ -Dd build/",
     "prepublish": "npm run build",
     "lint": "eslint .",
-    "generate-client": "babel-node src/generate.js",
+    "generate-client:repo": "babel-node src/generate.js repo",
+    "generate-client:folder": "babel-node src/generate.js folder",
     "swagger-pack": "swagger-pack ./temp/repo/url-tracking-api/api/url-tracking-api.json > ./temp/swagger/url-tracking-api/url-tracking-api.json"
   },
   "keywords": [
