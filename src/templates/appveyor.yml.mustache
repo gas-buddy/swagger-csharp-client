@@ -1,0 +1,26 @@
+version: 1.1.{build}
+branches:
+  only:
+  - master
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
+nuget:
+  account_feed: true
+  project_feed: true
+before_build:
+- cmd: >-
+    nuget restore {{{packageName}}}.sln
+build:
+  project: {{{packageName}}}.sln
+  publish_nuget: true
+  publish_nuget_symbols: true
+  include_nuget_references: true
+  verbosity: minimal
+test: off
+artifacts:
+- path: src/{{{packageName}}}/bin/debug/{{{packageName}}}.dll
+  name: production
