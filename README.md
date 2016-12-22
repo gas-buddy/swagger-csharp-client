@@ -55,6 +55,7 @@ If you want to generate a client with a git repo, or update an existing client r
 1. Create a new repo for the client if it doesn't already exist:
   * The new repo should be named `[api-repo-name]-client-csharp` (e.g. `poi-api-client-csharp`)
   * Ensure the repo is created with a `README.md` file, which will ensure there is a `master` branch
+  * Under Collaborators add the developers team as admin
 2. Run the following command to generate a client:
 
 ```
@@ -65,6 +66,13 @@ For example:
 ```
 npm run generate-client:repo poi-api poi-api-client-csharp
 ```
+
+3. Add to appveyor to access as nuget package
+  * First you will need to navigate to the projects tab and click NEW PROJECT
+  * Add your new client project
+  * Run the NEW BUILD command
+
+Your project should now be available as a nuget package
 
 ## API Client Without git Repo
 

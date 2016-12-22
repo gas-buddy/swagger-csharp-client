@@ -24,6 +24,7 @@
   "dependencies": {
     "@gasbuddy/swagger-ref-resolver": "^1.1.2",
     "bluebird": "^3.4.6",
+    "js-yaml": "^3.7.0",
     "mustache": "^2.3.0",
     "winston": "^2.1.1"
   },

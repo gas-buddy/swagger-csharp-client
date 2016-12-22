@@ -1,6 +1,7 @@
 import childProcess from 'child_process';
 import fs from 'fs';
 import mustache from 'mustache';
+import jsyaml from 'js-yaml';
 
 // Creates a file from a template
 function createFileFromTemplate(templatePath, outputPath, viewModel) {
@@ -113,22 +114,29 @@ function getApiCommitId(apiDirectory) {
 }
 
 // Checkouts a new branch of the client repo
-function checkoutClient(clientRepoName, clientRepoDirectory, branchName) {
+function checkoutClient(clientRepoName, clientRepoDirectory) {
   if (!fs.existsSync(clientRepoDirectory)) {
     cloneClient(clientRepoName, clientRepoDirectory);
   } else {
     pullClient(clientRepoName, clientRepoDirectory);
   }
+}
 
-  // Removed code to create new branch for now
-  // const scriptPath = './temp/createBranch.sh';
-  // createFileFromTemplate('./src/templates/createBranch.sh.mustache', scriptPath, { branchName, repoDirectory: clientRepoDirectory });
-  // childProcess.execSync(`sh ${scriptPath}`);
+// Returns the swagger version from a filepath
+function getSwaggerVersion(swaggerFilePath) {
+  let file = fs.readFileSync(swaggerFilePath, 'utf-8');
+  if (swaggerFilePath.includes('.yaml')) {
+    file = jsyaml.load(file);
+  } else {
+    file = JSON.parse(file);
+  }
+
+  return file.info.version;
 }
 
 // Commits the branch and pushes it to the remote
-function commitClient(apiName, clientDirectory, commitId) {
-  const comment = `Client for: https://github.com/gas-buddy/${apiName}/tree/${commitId}`;
+function commitClient(apiName, clientDirectory, commitId, apiVersion) {
+  const comment = `Client for v${apiVersion} https://github.com/gas-buddy/${apiName}/tree/${commitId}`;
 
   let script = fs.readFileSync('./src/templates/commitClient.sh.mustache', 'utf-8');
   script = mustache.render(script, { repoDirectory: clientDirectory, comment });
@@ -139,20 +147,20 @@ function commitClient(apiName, clientDirectory, commitId) {
 }
 
 // Sets up the appveyor configuration
-function setupAppVeyor(packageName, outputDirectory, clientRepoName) {
-  createFileFromTemplate('./src/templates/appveyor.yml.mustache', `${outputDirectory}/appveyor.yml`, { packageName });
+function setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion) {
+  createFileFromTemplate('./src/templates/appveyor.yml.mustache', `${outputDirectory}/appveyor.yml`, { packageName, apiVersion });
   createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { packageName, repoName: clientRepoName });
 }
 
 // Generate the client code for the swagger doc
 function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode) {
-  const commitId = getApiCommitId(repoDirectory);
-  const branchName = `auto-generated-commit#${commitId}`;
+  let commitId = getApiCommitId(repoDirectory);
+  commitId = commitId.toString().substring(0, 8);
 
   const outputDirectory = `./../${clientRepoName}`;
 
   if (mode === 'repo') {
-    checkoutClient(clientRepoName, outputDirectory, branchName);
+    checkoutClient(clientRepoName, outputDirectory);
   }
 
   let packageName = skewerCaseStringToPascalCaseString(repoName);
@@ -165,11 +173,12 @@ function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName
   createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName });
 
   if (mode === 'repo') {
-    setupAppVeyor(packageName, outputDirectory, clientRepoName);
+    const apiVersion = getSwaggerVersion(swaggerFilePath);
+    setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion);
 
     // eslint-disable-next-line no-console
-    console.log(`Pushing branch https://github.com/gas-buddy/${clientRepoName}/tree/${branchName}...`);
-    commitClient(repoName, outputDirectory, commitId);
+    console.log(`Pushing commit to https://github.com/gas-buddy/${clientRepoName}`);
+    commitClient(repoName, outputDirectory, commitId, apiVersion);
   }
 }
 
