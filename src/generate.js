@@ -32,7 +32,7 @@ function cloneRepoApi(repoName) {
 
   const repoDirectory = `./temp/repo/${repoName}`;
   const scriptPath = `${scriptFolder}/cloneApiSwagger.sh`;
-  createFileFromTemplate('./src/templates/cloneApiSwagger.sh.mustache', scriptPath, { repoName, repoDirectory })
+  createFileFromTemplate('./src/templates/cloneApiSwagger.sh.mustache', scriptPath, { repoName, repoDirectory });
 
   childProcess.execSync(`sh ${scriptPath}`);
 
@@ -86,7 +86,7 @@ function cloneClient(repoName, repoDirectory) {
   console.log(`Cloning ${repoName}...`);
 
   const scriptPath = './temp/cloneClient.sh';
-  createFileFromTemplate('./src/templates/cloneClient.sh.mustache', scriptPath, { repoName, repoDirectory })
+  createFileFromTemplate('./src/templates/cloneClient.sh.mustache', scriptPath, { repoName, repoDirectory });
 
   childProcess.execSync(`sh ${scriptPath}`);
 }
@@ -97,7 +97,7 @@ function pullClient(repoName, repoDirectory) {
   console.log(`Getting latest on ${repoName}...`);
 
   const scriptPath = './temp/pullClient.sh';
-  createFileFromTemplate('./src/templates/pullClient.sh.mustache', scriptPath, { repoDirectory })
+  createFileFromTemplate('./src/templates/pullClient.sh.mustache', scriptPath, { repoDirectory });
 
   childProcess.execSync(`sh ${scriptPath}`);
 }
@@ -120,9 +120,10 @@ function checkoutClient(clientRepoName, clientRepoDirectory, branchName) {
     pullClient(clientRepoName, clientRepoDirectory);
   }
 
-  const scriptPath = './temp/createBranch.sh';
-  createFileFromTemplate('./src/templates/createBranch.sh.mustache', scriptPath, { branchName, repoDirectory: clientRepoDirectory })
-  childProcess.execSync(`sh ${scriptPath}`);
+  // Removed code to create new branch for now
+  // const scriptPath = './temp/createBranch.sh';
+  // createFileFromTemplate('./src/templates/createBranch.sh.mustache', scriptPath, { branchName, repoDirectory: clientRepoDirectory });
+  // childProcess.execSync(`sh ${scriptPath}`);
 }
 
 // Commits the branch and pushes it to the remote
@@ -155,7 +156,7 @@ function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName
   console.log(`Generating ${packageName}...`);
   childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
 
-  createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName })
+  createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName });
 
   if (mode === 'repo') {
     // eslint-disable-next-line no-console
@@ -208,7 +209,7 @@ function validCommandLineArgs() {
 
 // Generate an api client from the command line args
 function generateFromCommandLineArgs() {
-  if (validCommandLineArgs()){
+  if (validCommandLineArgs()) {
     const mode = process.argv[2];
     const repoNameArg = process.argv[3];
     const clientRepoNameArg = process.argv[4];
