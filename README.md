@@ -70,7 +70,7 @@ npm run generate-client:repo poi-api poi-api-client-csharp
 
 If you just want to generate the code for a client in a local folder then run the following instead:
 ```
-npm run generate-client:folder [api-repo-name] -f [client-name]
+npm run generate-client:folder [api-repo-name] [client-name]
 ```
 
 The first time you run `generate-client` it will take several minutes to run as it needs to clone and build `swagger-codegen`.

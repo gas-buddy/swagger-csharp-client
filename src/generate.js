@@ -2,29 +2,38 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import mustache from 'mustache';
 
+// Creates a file from a template
+function createFileFromTemplate(templatePath, outputPath, viewModel) {
+  let file = fs.readFileSync(templatePath, 'utf-8');
+  file = mustache.render(file, viewModel);
+  fs.writeFileSync(outputPath, file);
+}
+
 // Clones and builds the codegen repo so it can be used locally
 function cloneCodegen() {
   if (!fs.existsSync('./../swagger-codegen')) {
     // eslint-disable-next-line no-console
-    console.log('Building codegen...');
+    console.log('Cloning codegen...');
     childProcess.execSync('sh ./src/cloneCodegen.sh');
+  }
+  if (!fs.existsSync('./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar')) {
+    // eslint-disable-next-line no-console
+    console.log('Building codegen...');
+    childProcess.execSync('sh ./src/buildCodegen.sh');
   }
 }
 
 // Create script to clone repo api spec
 function cloneRepoApi(repoName) {
-  let script = fs.readFileSync('./src/templates/cloneApiSwagger.sh.mustache', 'utf-8');
-
-  const repoDirectory = `./temp/repo/${repoName}`;
-  script = mustache.render(script, { repoName, repoDirectory });
-
   const scriptFolder = './temp';
   if (!fs.existsSync(scriptFolder)) {
     fs.mkdirSync(scriptFolder);
   }
 
+  const repoDirectory = `./temp/repo/${repoName}`;
   const scriptPath = `${scriptFolder}/cloneApiSwagger.sh`;
-  fs.writeFileSync(scriptPath, script);
+  createFileFromTemplate('./src/templates/cloneApiSwagger.sh.mustache', scriptPath, { repoName, repoDirectory })
+
   childProcess.execSync(`sh ${scriptPath}`);
 
   return repoDirectory;
@@ -76,10 +85,9 @@ function cloneClient(repoName, repoDirectory) {
   // eslint-disable-next-line no-console
   console.log(`Cloning ${repoName}...`);
 
-  let script = fs.readFileSync('./src/templates/cloneClient.sh.mustache', 'utf-8');
-  script = mustache.render(script, { repoName, repoDirectory });
   const scriptPath = './temp/cloneClient.sh';
-  fs.writeFileSync(scriptPath, script);
+  createFileFromTemplate('./src/templates/cloneClient.sh.mustache', scriptPath, { repoName, repoDirectory })
+
   childProcess.execSync(`sh ${scriptPath}`);
 }
 
@@ -88,10 +96,9 @@ function pullClient(repoName, repoDirectory) {
   // eslint-disable-next-line no-console
   console.log(`Getting latest on ${repoName}...`);
 
-  let script = fs.readFileSync('./src/templates/pullClient.sh.mustache', 'utf-8');
-  script = mustache.render(script, { repoDirectory });
   const scriptPath = './temp/pullClient.sh';
-  fs.writeFileSync(scriptPath, script);
+  createFileFromTemplate('./src/templates/pullClient.sh.mustache', scriptPath, { repoDirectory })
+
   childProcess.execSync(`sh ${scriptPath}`);
 }
 
@@ -113,10 +120,8 @@ function checkoutClient(clientRepoName, clientRepoDirectory, branchName) {
     pullClient(clientRepoName, clientRepoDirectory);
   }
 
-  let script = fs.readFileSync('./src/templates/createBranch.sh.mustache', 'utf-8');
-  script = mustache.render(script, { branchName, repoDirectory: clientRepoDirectory });
   const scriptPath = './temp/createBranch.sh';
-  fs.writeFileSync(scriptPath, script);
+  createFileFromTemplate('./src/templates/createBranch.sh.mustache', scriptPath, { branchName, repoDirectory: clientRepoDirectory })
   childProcess.execSync(`sh ${scriptPath}`);
 }
 
@@ -143,15 +148,14 @@ function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName
     checkoutClient(clientRepoName, outputDirectory, branchName);
   }
 
-  const packageName = skewerCaseStringToPascalCaseString(clientRepoName);
+  let packageName = skewerCaseStringToPascalCaseString(repoName);
+  packageName = `${packageName}Client`;
 
   // eslint-disable-next-line no-console
   console.log(`Generating ${packageName}...`);
   childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
 
-  let appConfig = fs.readFileSync('./src/templates/app_test.config.mustache', 'utf-8');
-  appConfig = mustache.render(appConfig, { packageName });
-  fs.writeFileSync(`${outputDirectory}/src/${packageName}.Test/app.config`, appConfig);
+  createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName })
 
   if (mode === 'repo') {
     // eslint-disable-next-line no-console
