@@ -1,33 +1,40 @@
 import childProcess from 'child_process';
 import fs from 'fs';
 import mustache from 'mustache';
+import jsyaml from 'js-yaml';
 
-const repoNameArg = process.argv[2];
-const outputDirectoryArg = process.argv[3];
+// Creates a file from a template
+function createFileFromTemplate(templatePath, outputPath, viewModel) {
+  let file = fs.readFileSync(templatePath, 'utf-8');
+  file = mustache.render(file, viewModel);
+  fs.writeFileSync(outputPath, file);
+}
 
 // Clones and builds the codegen repo so it can be used locally
 function cloneCodegen() {
   if (!fs.existsSync('./../swagger-codegen')) {
     // eslint-disable-next-line no-console
-    console.log('Building codegen...');
+    console.log('Cloning swagger-codegen...');
     childProcess.execSync('sh ./src/cloneCodegen.sh');
+  }
+  if (!fs.existsSync('./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar')) {
+    // eslint-disable-next-line no-console
+    console.log('Building swagger-codegen...');
+    childProcess.execSync('sh ./src/buildCodegen.sh');
   }
 }
 
 // Create script to clone repo api spec
 function cloneRepoApi(repoName) {
-  let script = fs.readFileSync('./src/templates/gitClone.sh.mustache', 'utf-8');
-
-  const repoDirectory = `./temp/repo/${repoName}`;
-  script = mustache.render(script, { repoName, repoDirectory });
-
   const scriptFolder = './temp';
   if (!fs.existsSync(scriptFolder)) {
     fs.mkdirSync(scriptFolder);
   }
 
-  const scriptPath = `${scriptFolder}/gitClone.sh`;
-  fs.writeFileSync(scriptPath, script);
+  const repoDirectory = `./temp/repo/${repoName}`;
+  const scriptPath = `${scriptFolder}/cloneApiSwagger.sh`;
+  createFileFromTemplate('./src/templates/cloneApiSwagger.sh.mustache', scriptPath, { repoName, repoDirectory });
+
   childProcess.execSync(`sh ${scriptPath}`);
 
   return repoDirectory;
@@ -74,18 +81,105 @@ function skewerCaseStringToPascalCaseString(str) {
   });
 }
 
+// Clones the client repo
+function cloneClient(repoName, repoDirectory) {
+  // eslint-disable-next-line no-console
+  console.log(`Cloning ${repoName}...`);
+
+  const scriptPath = './temp/cloneClient.sh';
+  createFileFromTemplate('./src/templates/cloneClient.sh.mustache', scriptPath, { repoName, repoDirectory });
+
+  childProcess.execSync(`sh ${scriptPath}`);
+}
+
+// Pulls the client repo to ensure it is up to date
+function pullClient(repoName, repoDirectory) {
+  // eslint-disable-next-line no-console
+  console.log(`Pulling master from ${repoName}...`);
+
+  const scriptPath = './temp/pullClient.sh';
+  createFileFromTemplate('./src/templates/pullClient.sh.mustache', scriptPath, { repoDirectory });
+
+  childProcess.execSync(`sh ${scriptPath}`);
+}
+
+// Returns the commit Id of the api
+function getApiCommitId(apiDirectory) {
+  let script = fs.readFileSync('./src/templates/getCommitId.sh.mustache', 'utf-8');
+  script = mustache.render(script, { repoDirectory: apiDirectory });
+  const scriptPath = './temp/getCommitId.sh';
+  fs.writeFileSync(scriptPath, script);
+  const commitId = childProcess.execSync(`sh ${scriptPath}`);
+  return commitId;
+}
+
+// Checkouts a new branch of the client repo
+function checkoutClient(clientRepoName, clientRepoDirectory) {
+  if (!fs.existsSync(clientRepoDirectory)) {
+    cloneClient(clientRepoName, clientRepoDirectory);
+  } else {
+    pullClient(clientRepoName, clientRepoDirectory);
+  }
+}
+
+// Returns the swagger version from a filepath
+function getSwaggerVersion(swaggerFilePath) {
+  let file = fs.readFileSync(swaggerFilePath, 'utf-8');
+  if (swaggerFilePath.includes('.yaml')) {
+    file = jsyaml.load(file);
+  } else {
+    file = JSON.parse(file);
+  }
+
+  return file.info.version;
+}
+
+// Commits the branch and pushes it to the remote
+function commitClient(apiName, clientDirectory, commitId, apiVersion) {
+  const comment = `Client for v${apiVersion} https://github.com/gas-buddy/${apiName}/tree/${commitId}`;
+
+  let script = fs.readFileSync('./src/templates/commitClient.sh.mustache', 'utf-8');
+  script = mustache.render(script, { repoDirectory: clientDirectory, comment });
+  const scriptPath = './temp/commitClient.sh';
+  fs.writeFileSync(scriptPath, script);
+
+  childProcess.execSync(`sh ${scriptPath}`);
+}
+
+// Sets up the appveyor configuration
+function setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion) {
+  createFileFromTemplate('./src/templates/appveyor.yml.mustache', `${outputDirectory}/appveyor.yml`, { packageName, apiVersion });
+  createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { packageName, repoName: clientRepoName });
+}
+
 // Generate the client code for the swagger doc
-function generateClient(repoName, swaggerFilePath, outputDirectory) {
+function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode) {
+  let commitId = getApiCommitId(repoDirectory);
+  commitId = commitId.toString().substring(0, 8);
+
+  const outputDirectory = `./../${clientRepoName}`;
+
+  if (mode === 'repo') {
+    checkoutClient(clientRepoName, outputDirectory);
+  }
+
   let packageName = skewerCaseStringToPascalCaseString(repoName);
-  packageName = packageName.replace('Api', 'Client');
+  packageName = `${packageName}Client`;
 
   // eslint-disable-next-line no-console
   console.log(`Generating ${packageName}...`);
-  childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerFilePath}   -l csharp   -o ${outputDirectory}/${packageName} --additional-properties packageName=${packageName} -t ./src/templates`);
+  childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
 
-  let appConfig = fs.readFileSync('./src/templates/app_test.config.mustache', 'utf-8');
-  appConfig = mustache.render(appConfig, { packageName });
-  fs.writeFileSync(`${outputDirectory}/${packageName}/src/${packageName}.Test/app.config`, appConfig);
+  createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName });
+
+  if (mode === 'repo') {
+    const apiVersion = getSwaggerVersion(swaggerFilePath);
+    setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion);
+
+    // eslint-disable-next-line no-console
+    console.log(`Pushing commit to https://github.com/gas-buddy/${clientRepoName} ...`);
+    commitClient(repoName, outputDirectory, commitId, apiVersion);
+  }
 }
 
 // Deletes a folder and all of it's contents
@@ -104,17 +198,44 @@ function deleteFolderRecursive(path) {
 }
 
 // Generates a csharp client from a repo
-function generate(repoName, outputDirectory) {
-  if (repoName && outputDirectory) {
+function generate(repoName, clientRepoName, mode) {
+  if (repoName && clientRepoName) {
     cloneCodegen();
     const repoDirectory = cloneRepoApi(repoName);
     const swaggerFilePath = collateSwagger(repoName, repoDirectory);
-    generateClient(repoName, swaggerFilePath, outputDirectory);
+    generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode);
     deleteFolderRecursive('./temp');
-  } else {
+
     // eslint-disable-next-line no-console
-    console.log('You must specify a repository name and an output directory');
+    console.log(`Succesffully updated ${clientRepoName}`);
+  } else {
+    showUsage();
   }
 }
 
-generate(repoNameArg, outputDirectoryArg);
+function showUsage() {
+  // eslint-disable-next-line no-console
+  console.log('Usage: generate-client:[repo|folder] [api-repo-name] [client-repo-name|client-folder-name]');
+}
+
+// Are the command line args valid?
+function validCommandLineArgs() {
+  if (process.argv.length !== 5 || (process.argv[2] !== 'folder' && process.argv[2] !== 'repo')) {
+    return false;
+  }
+  return true;
+}
+
+// Generate an api client from the command line args
+function generateFromCommandLineArgs() {
+  if (validCommandLineArgs()) {
+    const mode = process.argv[2];
+    const repoNameArg = process.argv[3];
+    const clientRepoNameArg = process.argv[4];
+    generate(repoNameArg, clientRepoNameArg, mode);
+  } else {
+    showUsage();
+  }
+}
+
+generateFromCommandLineArgs();
