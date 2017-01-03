@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Configuration;
 
 namespace {{packageName}}.Client
 {
@@ -44,9 +45,12 @@ namespace {{packageName}}.Client
 
             Username = username;
             Password = password;
-            AccessToken = accessToken;
             UserAgent = userAgent;
 
+            if (accessToken == null)
+                AccessToken = GetAccessToken();
+            else
+                AccessToken = accessToken;
             if (defaultHeader != null)
                 DefaultHeader = defaultHeader;
             if (apiKey != null)
@@ -57,6 +61,15 @@ namespace {{packageName}}.Client
             TempFolderPath = tempFolderPath;
             DateTimeFormat = dateTimeFormat;
             Timeout = timeout;
+        }
+
+        /// <summary>
+        /// Read and return the host from the configuration file
+        /// </summary>
+        /// <returns></returns>
+        private static string GetAccessToken()
+        {
+            return ApiClient.Base64Encode(ConfigurationManager.AppSettings["{{packageName}}.Key"]);
         }
 
         /// <summary>
