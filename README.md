@@ -61,7 +61,7 @@ npm install
 If you want to generate a client to be available on nuget(which you probably do), or update an existing client nuget package, then run the following:
 
 ```
-npm run generate-client:nuget [api-repo-name] [api-key]
+npm run generate-client [api-repo-name] [api-key]
 ```
 
 The api-key is the nuget api-key found on app-veyour. It is available in 1Password under the entry `AppVeyour Nuget ApiKey`

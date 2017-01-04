@@ -159,7 +159,7 @@ function deleteFolderRecursive(path) {
 
 function showUsage() {
   // eslint-disable-next-line no-console
-  console.log('Usage: generate-client:[nuget|folder] [api-repo-name] [api-key:only when using nuget option]');
+  console.log('Usage: generate-client[:folder] [api-repo-name] [api-key:only when using nuget option]');
 }
 
 // Generates a csharp client from a repo
