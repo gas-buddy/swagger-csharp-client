@@ -56,24 +56,34 @@ npm install
 
 # Generating an API Client
 
+## API Client With `nuget` Package Without `git` Repo
+
+If you want to generate a client to be available on nuget without creating a git repo (which you probably do), or update an existing client nuget package, then run the following:
+
+```
+npm run generate-client:nuget [api-repo-name] [api-key]
+```
+
+The api-key is the nuget api-key found on app-veyour. It is available in 1Password under the entry `AppVeyour Nuget ApiKey`
+
 ## API Client With `git` Repo
 
-If you want to generate a client with a git repo (which you probably do), or update an existing client repo, then follow these steps:
+If you want to generate a client with a git repo, or update an existing client repo, then follow these steps:
 
 1. Create a new repo for the client if it doesn't already exist:
-  * The new repo should be named `[api-repo-name]-client-csharp` (e.g. `poi-api-client-csharp`)
+  * The new repo must be named `[api-repo-name]-client-csharp` (e.g. `poi-api-client-csharp`)
   * Ensure the repo is created with a `README.md` file, which will ensure there is a `master` branch
   * Under Collaborators add the developers team as Admin (so appveyor can do stuff)
 
 2. Run the following command to generate a client:
 
 ```
-npm run generate-client:repo [api-repo-name] [client-repo-name]
+npm run generate-client:repo [api-repo-name]
 ```
 
 For example:
 ```
-npm run generate-client:repo poi-api poi-api-client-csharp
+npm run generate-client:repo poi-api
 ```
 
 3. Add the api client repo to appveyor (only need to do this for new api client repos):
@@ -83,11 +93,11 @@ npm run generate-client:repo poi-api poi-api-client-csharp
 
 Once the build completes, the api client will be available as a nuget package, which can add to a .NET project using Visual Studio.
 
-## API Client Without `git` Repo
+## API Client Without `git` Repo or `nuget` Package
 
 If you just want to generate the code for a client in a local folder then run the following instead:
 ```
-npm run generate-client:folder [api-repo-name] [client-name]
+npm run generate-client:folder [api-repo-name]
 ```
 
 Note that the first time you run `generate-client` it will take several minutes to run as it needs to clone and build `swagger-codegen`.

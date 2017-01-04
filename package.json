@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "generate-client:repo": "babel-node src/generate.js repo",
     "generate-client:folder": "babel-node src/generate.js folder",
+    "generate-client:nuget": "babel-node src/generate.js nuget",
     "swagger-pack": "swagger-pack ./temp/repo/url-tracking-api/api/url-tracking-api.json > ./temp/swagger/url-tracking-api/url-tracking-api.json"
   },
   "keywords": [
