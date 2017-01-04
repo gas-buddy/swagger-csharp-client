@@ -81,28 +81,6 @@ function skewerCaseStringToPascalCaseString(str) {
   });
 }
 
-// Clones the client repo
-function cloneClient(repoName, repoDirectory) {
-  // eslint-disable-next-line no-console
-  console.log(`Cloning ${repoName}...`);
-
-  const scriptPath = './temp/cloneClient.sh';
-  createFileFromTemplate('./src/templates/cloneClient.sh.mustache', scriptPath, { repoName, repoDirectory });
-
-  childProcess.execSync(`sh ${scriptPath}`);
-}
-
-// Pulls the client repo to ensure it is up to date
-function pullClient(repoName, repoDirectory) {
-  // eslint-disable-next-line no-console
-  console.log(`Pulling master from ${repoName}...`);
-
-  const scriptPath = './temp/pullClient.sh';
-  createFileFromTemplate('./src/templates/pullClient.sh.mustache', scriptPath, { repoDirectory });
-
-  childProcess.execSync(`sh ${scriptPath}`);
-}
-
 // Returns the commit Id of the api
 function getApiCommitId(apiDirectory) {
   let script = fs.readFileSync('./src/templates/getCommitId.sh.mustache', 'utf-8');
@@ -111,15 +89,6 @@ function getApiCommitId(apiDirectory) {
   fs.writeFileSync(scriptPath, script);
   const commitId = childProcess.execSync(`sh ${scriptPath}`);
   return commitId;
-}
-
-// Checkouts a new branch of the client repo
-function checkoutClient(clientRepoName, clientRepoDirectory) {
-  if (!fs.existsSync(clientRepoDirectory)) {
-    cloneClient(clientRepoName, clientRepoDirectory);
-  } else {
-    pullClient(clientRepoName, clientRepoDirectory);
-  }
 }
 
 // Returns the swagger version from a filepath
@@ -140,25 +109,14 @@ function getSwaggerVersion(swaggerFilePath) {
   return version;
 }
 
-// Commits the branch and pushes it to the remote
-function commitClient(apiName, clientDirectory, commitId, apiVersion) {
-  const comment = `Client for v${apiVersion} https://github.com/gas-buddy/${apiName}/tree/${commitId}`;
+// Pushes the client to nuget
+function pushToNuget(clientDirectory, projectName, swaggerFilePath, nugetPackageName, nugetApiKey) {
+  const apiVersion = getSwaggerVersion(swaggerFilePath);
+  createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${clientDirectory}/src/${projectName}/${projectName}.nuspec`, { projectName, nugetPackageName});
 
-  let script = fs.readFileSync('./src/templates/commitClient.sh.mustache', 'utf-8');
-  script = mustache.render(script, { repoDirectory: clientDirectory, comment });
-  const scriptPath = './temp/commitClient.sh';
-  fs.writeFileSync(scriptPath, script);
+  // eslint-disable-next-line no-console
+  console.log(`Pushing nuget package: ${nugetPackageName}, version: ${apiVersion}`);
 
-  childProcess.execSync(`sh ${scriptPath}`);
-}
-
-// Sets up the appveyor configuration
-function setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion) {
-  createFileFromTemplate('./src/templates/appveyor.yml.mustache', `${outputDirectory}/appveyor.yml`, { packageName, apiVersion });
-}
-
-// Pushes the cleitn to nuget
-function pushToNuget(clientDirectory, projectName, apiVersion, nugetPackageName, nugetApiKey) {
   const scriptPath = './temp/nugetPush.sh';
   createFileFromTemplate('./src/templates/nugetPush.sh.mustache', scriptPath, { projectName, apiVersion, clientDirectory, nugetPackageName, nugetApiKey });
   childProcess.execSync(`sh ${scriptPath}`);
@@ -171,12 +129,7 @@ function generateClient(settings) {
 
   const outputDirectory = `./../${settings.clientRepoName}`;
 
-  if (settings.mode === 'repo') {
-    checkoutClient(settings.clientRepoName, outputDirectory);
-  }
-
-  let packageName = skewerCaseStringToPascalCaseString(settings.repoName);
-  packageName = `${packageName}Client`;
+  const packageName = skewerCaseStringToPascalCaseString(settings.clientRepoName);
 
   // eslint-disable-next-line no-console
   console.log(`Generating ${packageName}...`);
@@ -184,20 +137,8 @@ function generateClient(settings) {
 
   createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName });
 
-  if (settings.mode !== 'folder') {
-    const apiVersion = getSwaggerVersion(settings.swaggerFilePath);
-    createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { packageName, repoName: settings.clientRepoName });
-
-    if (settings.mode === 'repo') {
-      setupAppVeyor(packageName, outputDirectory, settings.clientRepoName, apiVersion);
-      // eslint-disable-next-line no-console
-      console.log(`Pushing commit to https://github.com/gas-buddy/${settings.clientRepoName} ...`);
-      commitClient(settings.repoName, outputDirectory, commitId, apiVersion);
-    } else if (settings.mode === 'nuget') {
-      // eslint-disable-next-line no-console
-      console.log(`Pushing nuget package: ${settings.clientRepoName}, version: ${apiVersion}`);
-      pushToNuget(outputDirectory, packageName, apiVersion, settings.clientRepoName, settings.nugetApiKey);
-    }
+  if (settings.mode === 'nuget') {
+    pushToNuget(outputDirectory, packageName, settings.swaggerFilePath, settings.clientRepoName, settings.nugetApiKey);
   }
 }
 
@@ -218,16 +159,13 @@ function deleteFolderRecursive(path) {
 
 function showUsage() {
   // eslint-disable-next-line no-console
-  console.log('Usage: generate-client:[nuget|repo|folder] [api-repo-name] [api-key:only when using nuget option]');
+  console.log('Usage: generate-client[:folder] [api-repo-name] [api-key:only when using nuget option]');
 }
 
 // Generates a csharp client from a repo
 function generate(repoName, mode, nugetApiKey) {
   if (repoName) {
     let clientRepoName = `${repoName}-client`;
-    if (mode !== 'nuget') {
-      clientRepoName = `${clientRepoName}-csharp`;
-    }
 
     cloneCodegen();
     const repoDirectory = cloneRepoApi(repoName);
@@ -245,10 +183,8 @@ function generate(repoName, mode, nugetApiKey) {
 
 // Are the command line args valid?
 function validCommandLineArgs() {
-  if (process.argv.length !== 4 || (process.argv[2] !== 'folder' && process.argv[2] !== 'repo')) {
-    if (process.argv.length !== 5 || process.argv[2] !== 'nuget') {
-      return false;
-    }
+  if ((process.argv.length !== 4 || process.argv[2] !== 'folder') && (process.argv.length !== 5 || process.argv[2] !== 'nuget')) {
+    return false;
   }
   return true;
 }
