@@ -131,7 +131,13 @@ function getSwaggerVersion(swaggerFilePath) {
     file = JSON.parse(file);
   }
 
-  return file.info.version;
+  // This is needed because it will drop the .0 in the version at the end
+  let version = file.info.version;
+  if (version.split('.').length < 3) {
+    version = `${version}.0`;
+  }
+
+  return version;
 }
 
 // Commits the branch and pushes it to the remote
@@ -149,36 +155,49 @@ function commitClient(apiName, clientDirectory, commitId, apiVersion) {
 // Sets up the appveyor configuration
 function setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion) {
   createFileFromTemplate('./src/templates/appveyor.yml.mustache', `${outputDirectory}/appveyor.yml`, { packageName, apiVersion });
-  createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { packageName, repoName: clientRepoName });
+}
+
+// Pushes the cleitn to nuget
+function pushToNuget(clientDirectory, projectName, apiVersion, nugetPackageName, nugetApiKey) {
+  const scriptPath = './temp/nugetPush.sh';
+  createFileFromTemplate('./src/templates/nugetPush.sh.mustache', scriptPath, { projectName, apiVersion, clientDirectory, nugetPackageName, nugetApiKey });
+  childProcess.execSync(`sh ${scriptPath}`);
 }
 
 // Generate the client code for the swagger doc
-function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode) {
-  let commitId = getApiCommitId(repoDirectory);
+function generateClient(settings) {
+  let commitId = getApiCommitId(settings.repoDirectory);
   commitId = commitId.toString().substring(0, 8);
 
-  const outputDirectory = `./../${clientRepoName}`;
+  const outputDirectory = `./../${settings.clientRepoName}`;
 
-  if (mode === 'repo') {
-    checkoutClient(clientRepoName, outputDirectory);
+  if (settings.mode === 'repo') {
+    checkoutClient(settings.clientRepoName, outputDirectory);
   }
 
-  let packageName = skewerCaseStringToPascalCaseString(repoName);
+  let packageName = skewerCaseStringToPascalCaseString(settings.repoName);
   packageName = `${packageName}Client`;
 
   // eslint-disable-next-line no-console
   console.log(`Generating ${packageName}...`);
-  childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
+  childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${settings.swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
 
   createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName });
 
-  if (mode === 'repo') {
-    const apiVersion = getSwaggerVersion(swaggerFilePath);
-    setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion);
+  if (settings.mode !== 'folder') {
+    const apiVersion = getSwaggerVersion(settings.swaggerFilePath);
+    createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { packageName, repoName: settings.clientRepoName });
 
-    // eslint-disable-next-line no-console
-    console.log(`Pushing commit to https://github.com/gas-buddy/${clientRepoName} ...`);
-    commitClient(repoName, outputDirectory, commitId, apiVersion);
+    if (settings.mode === 'repo') {
+      setupAppVeyor(packageName, outputDirectory, settings.clientRepoName, apiVersion);
+      // eslint-disable-next-line no-console
+      console.log(`Pushing commit to https://github.com/gas-buddy/${settings.clientRepoName} ...`);
+      commitClient(settings.repoName, outputDirectory, commitId, apiVersion);
+    } else if (settings.mode === 'nuget') {
+      // eslint-disable-next-line no-console
+      console.log(`Pushing nuget package: ${settings.clientRepoName}, version: ${apiVersion}`);
+      pushToNuget(outputDirectory, packageName, apiVersion, settings.clientRepoName, settings.nugetApiKey);
+    }
   }
 }
 
@@ -197,13 +216,24 @@ function deleteFolderRecursive(path) {
   }
 }
 
+function showUsage() {
+  // eslint-disable-next-line no-console
+  console.log('Usage: generate-client:[nuget|repo|folder] [api-repo-name] [api-key:only when using nuget option]');
+}
+
 // Generates a csharp client from a repo
-function generate(repoName, clientRepoName, mode) {
-  if (repoName && clientRepoName) {
+function generate(repoName, mode, nugetApiKey) {
+  if (repoName) {
+    let clientRepoName = `${repoName}-client`;
+    if (mode !== 'nuget') {
+      clientRepoName = `${clientRepoName}-csharp`;
+    }
+
     cloneCodegen();
     const repoDirectory = cloneRepoApi(repoName);
     const swaggerFilePath = collateSwagger(repoName, repoDirectory);
-    generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode);
+    const settings = { repoName, repoDirectory, swaggerFilePath, clientRepoName, mode, nugetApiKey };
+    generateClient(settings);
     deleteFolderRecursive('./temp');
 
     // eslint-disable-next-line no-console
@@ -213,15 +243,12 @@ function generate(repoName, clientRepoName, mode) {
   }
 }
 
-function showUsage() {
-  // eslint-disable-next-line no-console
-  console.log('Usage: generate-client:[repo|folder] [api-repo-name] [client-repo-name|client-folder-name]');
-}
-
 // Are the command line args valid?
 function validCommandLineArgs() {
-  if (process.argv.length !== 5 || (process.argv[2] !== 'folder' && process.argv[2] !== 'repo')) {
-    return false;
+  if (process.argv.length !== 4 || (process.argv[2] !== 'folder' && process.argv[2] !== 'repo')) {
+    if (process.argv.length !== 5 || process.argv[2] !== 'nuget') {
+      return false;
+    }
   }
   return true;
 }
@@ -231,8 +258,8 @@ function generateFromCommandLineArgs() {
   if (validCommandLineArgs()) {
     const mode = process.argv[2];
     const repoNameArg = process.argv[3];
-    const clientRepoNameArg = process.argv[4];
-    generate(repoNameArg, clientRepoNameArg, mode);
+    const apiKeyArg = process.argv[4];
+    generate(repoNameArg, mode, apiKeyArg);
   } else {
     showUsage();
   }
