@@ -158,45 +158,45 @@ function setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion)
 }
 
 // Pushes the cleitn to nuget
-function pushToNuget(outputDirectory, packageName, apiVersion, nugetPackageName, nugetApiKey) {
+function pushToNuget(clientDirectory, projectName, apiVersion, nugetPackageName, nugetApiKey) {
   const scriptPath = './temp/nugetPush.sh';
-  createFileFromTemplate('./src/templates/nugetPush.sh.mustache', scriptPath, { packageName, apiVersion, outputDirectory, nugetPackageName, nugetApiKey });
+  createFileFromTemplate('./src/templates/nugetPush.sh.mustache', scriptPath, { projectName, apiVersion, clientDirectory, nugetPackageName, nugetApiKey });
   childProcess.execSync(`sh ${scriptPath}`);
 }
 
 // Generate the client code for the swagger doc
-function generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode, nugetApiKey) {
-  let commitId = getApiCommitId(repoDirectory);
+function generateClient(settings) {
+  let commitId = getApiCommitId(settings.repoDirectory);
   commitId = commitId.toString().substring(0, 8);
 
-  const outputDirectory = `./../${clientRepoName}`;
+  const outputDirectory = `./../${settings.clientRepoName}`;
 
-  if (mode === 'repo') {
-    checkoutClient(clientRepoName, outputDirectory);
+  if (settings.mode === 'repo') {
+    checkoutClient(settings.clientRepoName, outputDirectory);
   }
 
-  let packageName = skewerCaseStringToPascalCaseString(repoName);
+  let packageName = skewerCaseStringToPascalCaseString(settings.repoName);
   packageName = `${packageName}Client`;
 
   // eslint-disable-next-line no-console
   console.log(`Generating ${packageName}...`);
-  childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
+  childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${settings.swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
 
   createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName });
 
-  if (mode !== 'folder') {
-    const apiVersion = getSwaggerVersion(swaggerFilePath);
-    createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { packageName, repoName: clientRepoName });
+  if (settings.mode !== 'folder') {
+    const apiVersion = getSwaggerVersion(settings.swaggerFilePath);
+    createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { packageName, repoName: settings.clientRepoName });
 
-    if (mode === 'repo') {
-      setupAppVeyor(packageName, outputDirectory, clientRepoName, apiVersion);
+    if (settings.mode === 'repo') {
+      setupAppVeyor(packageName, outputDirectory, settings.clientRepoName, apiVersion);
       // eslint-disable-next-line no-console
-      console.log(`Pushing commit to https://github.com/gas-buddy/${clientRepoName} ...`);
-      commitClient(repoName, outputDirectory, commitId, apiVersion);
-    } else if (mode === 'nuget') {
+      console.log(`Pushing commit to https://github.com/gas-buddy/${settings.clientRepoName} ...`);
+      commitClient(settings.repoName, outputDirectory, commitId, apiVersion);
+    } else if (settings.mode === 'nuget') {
       // eslint-disable-next-line no-console
-      console.log(`Pushing nuget package: ${clientRepoName}, version: ${apiVersion}`);
-      pushToNuget(outputDirectory, packageName, apiVersion, clientRepoName, nugetApiKey);
+      console.log(`Pushing nuget package: ${settings.clientRepoName}, version: ${apiVersion}`);
+      pushToNuget(outputDirectory, packageName, apiVersion, settings.clientRepoName, settings.nugetApiKey);
     }
   }
 }
@@ -232,7 +232,8 @@ function generate(repoName, mode, nugetApiKey) {
     cloneCodegen();
     const repoDirectory = cloneRepoApi(repoName);
     const swaggerFilePath = collateSwagger(repoName, repoDirectory);
-    generateClient(repoName, repoDirectory, swaggerFilePath, clientRepoName, mode, nugetApiKey);
+    const settings = { repoName, repoDirectory, swaggerFilePath, clientRepoName, mode, nugetApiKey };
+    generateClient(settings);
     deleteFolderRecursive('./temp');
 
     // eslint-disable-next-line no-console
