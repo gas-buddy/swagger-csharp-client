@@ -10,6 +10,7 @@ A tool that generates a c# client from the Swagger specification found in a GB a
 
     * The default c# template "bakes" the api host into the generated client code, but we want the api host to be specified in the client's
     configuration file.
+    * We've changed the c# template to include the authorization token in the client's configuration file.
     * There is bug in the default c# template that generates compiler errors in some cases when generating enumerations.
 
 # Setup
