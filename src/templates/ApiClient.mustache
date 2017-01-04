@@ -28,7 +28,7 @@ namespace {{packageName}}.Client
         /// <returns></returns>
         private static string GetHost()
         {
-          return ConfigurationManager.AppSettings["{{packageName}}.Api.Host"];
+          return ConfigurationManager.AppSettings["{{packageName}}.Host"];
         }
 
         private JsonSerializerSettings serializerSettings = new JsonSerializerSettings
