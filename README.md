@@ -65,7 +65,12 @@ npm run generate-client [api-repo-name] [api-key]
 ```
 
 The api-key is the nuget api-key found on app-veyour. It is available in 1Password under the entry `AppVeyour Nuget ApiKey`
+Once the process has finished running the client will be avaialble as a nuget package. After installing it you will be required to add the following app.config setting to your consumer project for the client to work.
 
+```
+<add key="[nuget-package-name-in-pascal-case].Host" value="[service-url]" />
+<add key="[nuget-package-name-in-pascal-case].Key" value="[service-auth-key]" />
+```
 
 ## API Client Without `nuget` Package
 

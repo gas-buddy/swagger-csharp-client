@@ -1,4 +1,4 @@
 nuget restore {{{clientDirectory}}}/{{{projectName}}}.sln &&
-msbuild.exe {{{clientDirectory}}}/{{{projectName}}}.sln &&
+msbuild.exe {{{clientDirectory}}}/{{{projectName}}}.sln -p:Configuration=Release &&
 nuget pack {{{clientDirectory}}}/src/{{{projectName}}}/{{{projectName}}}.nuspec -outputdirectory ./temp -properties version={{{apiVersion}}} &&
 nuget push ./temp/{{{nugetPackageName}}}.{{{apiVersion}}}.nupkg -ApiKey {{{nugetApiKey}}} -Source https://ci.appveyor.com/nuget/gasbuddy
