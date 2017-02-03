@@ -47,9 +47,7 @@ namespace {{packageName}}.Client
             Password = password;
             UserAgent = userAgent;
 
-            if (accessToken == null)
-                AccessToken = GetAccessToken();
-            else
+            if (accessToken != null)
                 AccessToken = accessToken;
             if (defaultHeader != null)
                 DefaultHeader = defaultHeader;
@@ -57,6 +55,7 @@ namespace {{packageName}}.Client
                 ApiKey = apiKey;
             if (apiKeyPrefix != null)
                 ApiKeyPrefix = apiKeyPrefix;
+            AddApiKey("apikey", GetApiKeyFromConfig());
 
             TempFolderPath = tempFolderPath;
             DateTimeFormat = dateTimeFormat;
@@ -64,12 +63,12 @@ namespace {{packageName}}.Client
         }
 
         /// <summary>
-        /// Read and return the host from the configuration file
+        /// Read and return the apikey from the configuration file
         /// </summary>
         /// <returns></returns>
-        private static string GetAccessToken()
+        private static string GetApiKeyFromConfig()
         {
-            return ApiClient.Base64Encode(ConfigurationManager.AppSettings["{{packageName}}.Key"]);
+            return ConfigurationManager.AppSettings["UrlTrackingApiClient.Key"];
         }
 
         /// <summary>

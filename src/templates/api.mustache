@@ -262,20 +262,10 @@ namespace {{packageName}}.{{apiPackage}}
 
             {{#authMethods}}
             // authentication ({{name}}) required
-            {{#isApiKey}}
-            {{#isKeyInHeader}}
-            if (!String.IsNullOrEmpty(Configuration.GetApiKeyWithPrefix("{{keyParamName}}")))
+            foreach(KeyValuePair<string, string> apiKey in Configuration.ApiKey)
             {
-                localVarHeaderParams["{{keyParamName}}"] = Configuration.GetApiKeyWithPrefix("{{keyParamName}}");
+                localVarHeaderParams[apiKey.Key] = apiKey.Value;
             }
-            {{/isKeyInHeader}}
-            {{#isKeyInQuery}}
-            if (!String.IsNullOrEmpty(Configuration.GetApiKeyWithPrefix("{{keyParamName}}")))
-            {
-                localVarQueryParams["{{keyParamName}}"] = Configuration.GetApiKeyWithPrefix("{{keyParamName}}");
-            }
-            {{/isKeyInQuery}}
-            {{/isApiKey}}
             {{#isBasic}}
             // http basic authentication required
             if (!String.IsNullOrEmpty(Configuration.Username) || !String.IsNullOrEmpty(Configuration.Password))
