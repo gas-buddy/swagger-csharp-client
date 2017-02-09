@@ -58,8 +58,9 @@ npm install
 
 ## Make sure you have nuget and msbuild.exe
 
--Try the command `nuget help`. If the command is not found, then you need to download nuget-cli from https://dist.nuget.org/index.html (Use the Windows Command line version). Put the installed nuget.exe file into your desired folder and add that folder to your PATH
--Also add the MSBuild bin folder to your path, e.g. `C:\Program Files (x86)\MSBuild\14.0\Bin`
+* Try the command `nuget help`. If the command is not found, then you need to download nuget-cli from https://dist.nuget.org/index.html (Use the Windows Command line version). Put the installed nuget.exe file into your desired folder and add that folder to your PATH
+
+* Also add the MSBuild bin folder to your path, e.g. `C:\Program Files (x86)\MSBuild\14.0\Bin`
 
 
 ## API Client With `nuget` Package
