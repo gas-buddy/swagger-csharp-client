@@ -1,5 +1,7 @@
 # swagger-csharp-client
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/gas-buddy/swagger-csharp-client.svg)](https://greenkeeper.io/)
+
 A tool that generates a c# client from the Swagger specification found in a GB api or service repo.
 
 ## Why Do We Need This?
