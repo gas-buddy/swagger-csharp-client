@@ -285,6 +285,10 @@ namespace {{packageName}}.Client
                 }
                 return flattenedString.ToString();
             }
+            else if (obj is bool)
+            {
+                return Convert.ToString(obj).ToLower();
+            }
             else
                 return Convert.ToString (obj);
         }
