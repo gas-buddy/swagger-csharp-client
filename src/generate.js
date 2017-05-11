@@ -1,3 +1,5 @@
+/* eslint no-console: off*/
+
 import childProcess from 'child_process';
 import fs from 'fs';
 import mustache from 'mustache';
@@ -13,12 +15,10 @@ function createFileFromTemplate(templatePath, outputPath, viewModel) {
 // Clones and builds the codegen repo so it can be used locally
 function cloneCodegen() {
   if (!fs.existsSync('./../swagger-codegen')) {
-    // eslint-disable-next-line no-console
     console.log('Cloning swagger-codegen...');
     childProcess.execSync('sh ./src/cloneCodegen.sh');
   }
   if (!fs.existsSync('./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar')) {
-    // eslint-disable-next-line no-console
     console.log('Building swagger-codegen...');
     childProcess.execSync('sh ./src/buildCodegen.sh');
   }
@@ -40,9 +40,29 @@ function cloneRepoApi(repoName) {
   return repoDirectory;
 }
 
+// run npm install on any specs in the dependencies section of the repo's package.json
+function loadOutsideSpecs(repoDirectory) {
+  console.log('Loading swagger specs from outside projects...');
+
+  // get package.json "dependencies" section
+  const dependencyObj = JSON.parse(fs.readFileSync(`${repoDirectory}/package.json`)).dependencies;
+
+  // parse into an array of { name, version } objects
+  // then filter to spec packages only
+  const specNameRegExp = new RegExp('^@gasbuddy/.+-spec$');
+  const specs = Object.keys(dependencyObj)
+    .map(depName => ({ name: depName, version: dependencyObj[depName] }))
+    .filter(dep => specNameRegExp.test(dep.name));
+
+  for (const spec of specs) {
+    childProcess.execSync(`cd ${repoDirectory} && npm install ${spec.name}@${spec.version}`);
+  }
+}
+
 // Collate the swagger into a single document
 function collateSwagger(repoName, repoDirectory) {
-  // eslint-disable-next-line no-console
+  loadOutsideSpecs(repoDirectory);
+
   console.log('Compiling swagger...');
 
   const swaggerFolder = './temp/swagger';
@@ -50,14 +70,14 @@ function collateSwagger(repoName, repoDirectory) {
     fs.mkdirSync(swaggerFolder);
   }
 
-  let exstension = 'json';
-  if (!fs.existsSync(`${repoDirectory}/api/${repoName}.${exstension}`)) {
-    exstension = 'yaml';
+  let extension = 'json';
+  if (!fs.existsSync(`${repoDirectory}/api/${repoName}.${extension}`)) {
+    extension = 'yaml';
   }
 
-  const swaggerFilePath = `${swaggerFolder}/${repoName}.${exstension}`;
+  const swaggerFilePath = `${swaggerFolder}/${repoName}.${extension}`;
 
-  childProcess.execSync(`swagger-pack ${repoDirectory}/api/${repoName}.${exstension} > ${swaggerFilePath}`);
+  childProcess.execSync(`swagger-pack ${repoDirectory}/api/${repoName}.${extension} > ${swaggerFilePath}`);
 
   return swaggerFilePath;
 }
@@ -112,9 +132,8 @@ function getSwaggerVersion(swaggerFilePath) {
 // Pushes the client to nuget
 function pushToNuget(clientDirectory, projectName, swaggerFilePath, nugetPackageName, nugetApiKey) {
   const apiVersion = getSwaggerVersion(swaggerFilePath);
-  createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${clientDirectory}/src/${projectName}/${projectName}.nuspec`, { projectName, nugetPackageName});
+  createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${clientDirectory}/src/${projectName}/${projectName}.nuspec`, { projectName, nugetPackageName });
 
-  // eslint-disable-next-line no-console
   console.log(`Pushing nuget package: ${nugetPackageName}, version: ${apiVersion}`);
 
   const scriptPath = './temp/nugetPush.sh';
@@ -131,7 +150,6 @@ function generateClient(settings) {
 
   const packageName = skewerCaseStringToPascalCaseString(settings.clientRepoName);
 
-  // eslint-disable-next-line no-console
   console.log(`Generating ${packageName}...`);
   childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${settings.swaggerFilePath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
 
@@ -158,14 +176,13 @@ function deleteFolderRecursive(path) {
 }
 
 function showUsage() {
-  // eslint-disable-next-line no-console
   console.log('Usage: generate-client[:folder] [api-repo-name] [api-key:only when using nuget option]');
 }
 
 // Generates a csharp client from a repo
 function generate(repoName, mode, nugetApiKey) {
   if (repoName) {
-    let clientRepoName = `${repoName}-client`;
+    const clientRepoName = `${repoName}-client`;
 
     cloneCodegen();
     const repoDirectory = cloneRepoApi(repoName);
@@ -174,7 +191,6 @@ function generate(repoName, mode, nugetApiKey) {
     generateClient(settings);
     deleteFolderRecursive('./temp');
 
-    // eslint-disable-next-line no-console
     console.log(`Succesffully updated ${clientRepoName}`);
   } else {
     showUsage();
