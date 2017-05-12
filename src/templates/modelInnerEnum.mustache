@@ -6,6 +6,11 @@
         [JsonConverter(typeof(StringEnumConverter))]
         public enum {{#datatypeWithEnum}}{{&.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}
         {
+            /// <summary>
+            /// Default value for undefined enum. This is required because default values do not get converted to json in the client.
+            /// </summary>
+            Unknown,
+
             {{#allowableValues}}{{#enumVars}}
             /// <summary>
             /// Enum {{name}} for {{{value}}}
