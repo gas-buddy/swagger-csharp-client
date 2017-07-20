@@ -87,3 +87,12 @@ npm run generate-client:folder [api-repo-name]
 ```
 
 Note that the first time you run `generate-client` it will take several minutes to run as it needs to clone and build `swagger-codegen`.
+
+## Using Docker
+If you don't want to install java or maven.  Simply run `run-gb-service` in order to go into an interactive shell to generate the .net client.
+
+## Generating code from a swagger spec
+In order to generate the code from a swagger spec, you can `npm run generateFromSpec arg1 arg2 arg3`. Where 
+arg1 is the path to the Swagger Doc
+arg2 is the output directory
+arg3 is the name of the package
