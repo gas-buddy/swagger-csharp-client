@@ -11,7 +11,6 @@ assembly_info:
 platform:
   - Any CPU
 configuration:
-  - Debug
   - Release
 nuget:
   account_feed: true
@@ -27,5 +26,5 @@ build:
   verbosity: minimal
 test: off
 artifacts:
-- path: src/{{{packageName}}}/bin/debug/{{{packageName}}}.dll
+- path: src/{{{packageName}}}/bin/release/{{{packageName}}}.dll
   name: production
