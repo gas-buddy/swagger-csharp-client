@@ -203,13 +203,13 @@ this.{{name}} = {{name}};
             }
 {{/minLength}}{{#maximum}}
             // {{{name}}} ({{{datatype}}}) maximum
-            if(this.{{{name}}} > ({{{datatype}}}){{maximum}})
+            if(({{{datatype}}}) this.{{{name}}} > ({{{datatype}}}){{maximum}})
             {
                 yield return new ValidationResult("Invalid value for {{{name}}}, must be a value less than or equal to {{maximum}}.", new [] { "{{{name}}}" });
             }
 {{/maximum}}{{#minimum}}
             // {{{name}}} ({{{datatype}}}) minimum
-            if(this.{{{name}}} < ({{{datatype}}}){{minimum}})
+            if(({{{datatype}}}) this.{{{name}}} < ({{{datatype}}}){{minimum}})
             {
                 yield return new ValidationResult("Invalid value for {{{name}}}, must be a value greater than or equal to {{minimum}}.", new [] { "{{{name}}}" });
             }
