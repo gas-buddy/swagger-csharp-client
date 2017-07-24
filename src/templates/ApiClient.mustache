@@ -144,6 +144,11 @@ namespace {{packageName}}.Client
                 request.AddFile(param.Value.Name, paramWriter, param.Value.FileName, param.Value.ContentType);
                 {{/supportsUWP}}
             }
+            // Basic Auth
+            if (!String.IsNullOrEmpty(Configuration.Username) || !(String.IsNullOrEmpty(Configuration.Password)))
+            {
+                RestClient.Authenticator = new HttpBasicAuthenticator(Configuration.Username, Configuration.Password);
+            }
 
             if (postBody != null) // http body (model or byte[]) parameter
             {
