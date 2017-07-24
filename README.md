@@ -93,6 +93,13 @@ If you don't want to install java or maven.  Simply run `run-gb-service` in orde
 
 ## Generating code from a swagger spec
 In order to generate the code from a swagger spec, you can `npm run generate-from-spec arg1 arg2 arg3`. Where 
-arg1 is the path to the Swagger Doc
-arg2 is the output directory
-arg3 is the name of the package
+* arg1 is the path to the Swagger Doc
+* arg2 is the output directory
+* arg3 is the name of the package
+
+## Workflow for updating repo
+It's a bit difficult to get git working in the container with ssh. So for the time being here is a workflow.
+
+1. Outside the container, but inside this project run `git clone {repoName}`
+2. Inside the container, run `npm run generate-from-spec {path_to_swagger_doc} {directory_of_repo} {package_name}
+3. Outside the container, add the files, do a PR or a force push or whatever you like.
