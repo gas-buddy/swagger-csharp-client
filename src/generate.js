@@ -4,13 +4,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import mustache from 'mustache';
 import jsyaml from 'js-yaml';
-
-// Creates a file from a template
-function createFileFromTemplate(templatePath, outputPath, viewModel) {
-  let file = fs.readFileSync(templatePath, 'utf-8');
-  file = mustache.render(file, viewModel);
-  fs.writeFileSync(outputPath, file);
-}
+import { createFileFromTemplate } from './createFileFromTemplate';
 
 // Clones and builds the codegen repo so it can be used locally
 function cloneCodegen() {
