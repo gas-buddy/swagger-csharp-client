@@ -103,3 +103,6 @@ It's a bit difficult to get git working in the container with ssh. So for the ti
 1. Outside the container, but inside this project run `git clone {repoName}`
 2. Inside the container, run `npm run generate-from-spec {path_to_swagger_doc} {directory_of_repo} {package_name}`
 3. Outside the container, add the files, do a PR or a force push or whatever you like.
+
+## Appveyor integration
+This repo will create an Appveyor.yml file that will get appveyor to build from the c-sharp-client branch.  You will need to add your project to Appveyor an initially set it to look at the c-sharp-client branch.    
