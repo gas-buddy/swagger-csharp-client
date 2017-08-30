@@ -10,7 +10,7 @@ function generateFromSpec() {
   childProcess.execSync(`java -jar ./../swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate   -i ${swaggerPath}   -l csharp   -o ${outputDirectory} --additional-properties packageName=${packageName} -t ./src/templates`);
   createFileFromTemplate('./src/templates/app_test.config.mustache', `${outputDirectory}/src/${packageName}.Test/app.config`, { packageName });
   createFileFromTemplate('./src/templates/appveyor.yml.mustache', `${outputDirectory}/appveyor.yml`, { packageName });
-  createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { projectName: packageName, nugetPackageName: packageName });
+  createFileFromTemplate('./src/templates/nuget.nuspec.mustache', `${outputDirectory}/src/${packageName}/${packageName}.nuspec`, { projectName: packageName, nugetPackageName: outputDirectory });
 }
 
 generateFromSpec();
