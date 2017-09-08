@@ -101,6 +101,18 @@ Example:
 npm run generate-from-spec identity-serv-spec.json identity-serv-client IdentityServClient
 ```
 
+## Example stemps: Updating PoiApiClient
+1. Open two command prompts. cd into swagger-csharp-client in both
+2. Window 1: clone poi-api repo, cd into it, and `git checkout c-sharp-client`
+3. Window 1: git checkout -b c-sharp-client-rpm-v2.0.0
+4. Find the spec file that you want to generate from. This might come from an npm install, or if you have it locally just put it in the swagger-csharp-client project folder for now (e.g. poi-api-spec.json)
+5. Window 2: `run-gb-service`. This puts you in the container
+6. Window 2 (in container): npm run generate-from-spec poi-api-spec.json poi-api PoiApiClient
+7. Window 1: Verify that the generation was successful (`git status`)
+8. In the nested poi-api folder (Window 1), update the version in appveyor.yml
+9. In the case of poi-api, we need to update src/PoiApiClient/PoiApiApiClient.nuspec, changing the id from poi-api to poi-api-client. You may or may not need to do this, depending on the name of the project in appveyor
+10. Window 1: Commit and push the changes
+
 ## Workflow for updating repo
 It's a bit difficult to get git working in the container with ssh. So for the time being here is a workflow.
 
