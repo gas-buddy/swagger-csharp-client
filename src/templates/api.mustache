@@ -280,7 +280,16 @@ namespace {{packageName}}.{{apiPackage}}
                 localVarHeaderParams["Authorization"] = "Bearer " + Configuration.AccessToken;
             }{{/isOAuth}}
             {{/authMethods}}
-
+            {{^authMethods}}
+            // Some endpoints require authentication without providing a list of scopes. Add an apikey if provided to all endpoints.
+            foreach(KeyValuePair<string, string> apiKey in Configuration.ApiKey)
+            {
+                if(!String.IsNullOrEmpty(apiKey.Value))
+                {
+                    localVarHeaderParams[apiKey.Key] = apiKey.Value;
+                }
+            }
+            {{/authMethods}}
             // make the HTTP request
             IRestResponse localVarResponse = (IRestResponse) Configuration.ApiClient.CallApi(localVarPath,
                 Method.{{httpMethod}}, localVarQueryParams, localVarPostBody, localVarHeaderParams, localVarFormParams, localVarFileParams,
