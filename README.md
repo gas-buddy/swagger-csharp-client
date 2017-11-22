@@ -101,7 +101,7 @@ Example:
 npm run generate-from-spec identity-serv-spec.json identity-serv-client IdentityServClient
 ```
 
-## Example stemps: Updating PoiApiClient
+## Example steps: Updating PoiApiClient
 1. Open two command prompts. cd into swagger-csharp-client in both
 2. Window 1: clone poi-api repo, cd into it, and `git checkout c-sharp-client`
 3. Window 1 again: `git checkout -b c-sharp-client-rpm-v2.0.0`
