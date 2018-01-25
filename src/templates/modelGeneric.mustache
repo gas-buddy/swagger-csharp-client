@@ -70,7 +70,12 @@
             {{#defaultValue}}// use default value if no "{{name}}" provided
             if ({{name}} == null)
             {
+                {{#isEnum}}
+                this.{{name}} = ({{name}}Enum) Enum.Parse(typeof({{name}}Enum), {{{defaultValue}}});
+                {{/isEnum}}
+                {{^isEnum}}
                 this.{{name}} = {{{defaultValue}}};
+                {{/isEnum}}
             }
             else
             {
