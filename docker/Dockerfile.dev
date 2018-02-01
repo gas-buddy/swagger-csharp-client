@@ -6,6 +6,7 @@ RUN apk add --update nodejs git
 
 RUN git clone https://github.com/swagger-api/swagger-codegen &&\
     cd ./../swagger-codegen &&\ 
+    git checkout v2.3.1 &&\
     mvn -am -pl "modules/swagger-codegen-cli" package
 
 WORKDIR /data
