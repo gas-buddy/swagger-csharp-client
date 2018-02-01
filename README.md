@@ -103,7 +103,7 @@ npm run generate-from-spec identity-serv-spec.json identity-serv-client Identity
 
 ## Example stemps: Updating PoiApiClient
 1. Open two command prompts. cd into swagger-csharp-client in both
-2. Window 1: clone poi-api repo, cd into it, and `git checkout c-sharp-client`
+2. Window 1: clone poi-api repo, cd into it, and `git checkout c-sharp-client`.  If you are creating the branch for the first time, use `git checkout -b'c-sharp-client' --orphan` followed by `git rm -rf`
 3. Window 1: git checkout -b c-sharp-client-rpm-v2.0.0
 4. Find the spec file that you want to generate from. This might come from an npm install, or if you have it locally just put it in the swagger-csharp-client project folder for now (e.g. poi-api-spec.json)
 5. Window 2: `run-gb-service`. This puts you in the container
