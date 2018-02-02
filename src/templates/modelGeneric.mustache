@@ -68,14 +68,9 @@
             {{^isReadOnly}}
             {{^required}}
             {{#defaultValue}}// use default value if no "{{name}}" provided
-            if ({{name}} == default({{{datatypeWithEnum}}}))
+            if ({{name}} == null)
             {
-                {{#isEnum}}
-                this.{{name}} = ({{{datatypeWithEnum}}}) Enum.Parse(typeof({{{datatypeWithEnum}}}), {{{defaultValue}}});
-                {{/isEnum}}
-                {{^isEnum}}
                 this.{{name}} = {{{defaultValue}}};
-                {{/isEnum}}
             }
             else
             {
