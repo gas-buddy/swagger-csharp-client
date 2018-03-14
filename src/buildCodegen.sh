@@ -1,2 +1,2 @@
 cd ./../swagger-codegen
-mvn clean package
+mvn -am -pl "modules/swagger-codegen-cli" package
