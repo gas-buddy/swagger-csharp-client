@@ -1,12 +1,16 @@
-FROM jimschubert/8-jdk-alpine-mvn:1.0
+FROM maven:3-eclipse-temurin-11-alpine
 
-ENV GEN_DIR /opt/swagger-codegen
+ENV GEN_DIR=/opt/swagger-codegen
+# Add Java memory settings
+ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:MaxPermSize=256m"
+ENV MAVEN_OPTS="-Xms512m -Xmx1024m -XX:MaxPermSize=256m"
 
-RUN apk add --update nodejs git
+RUN apk add --update nodejs git yarn
 
-RUN git clone https://github.com/swagger-api/swagger-codegen &&\
-    cd ./../swagger-codegen &&\
-    mvn -am -pl "modules/swagger-codegen-cli" package
+RUN git clone https://github.com/swagger-api/swagger-codegen
+RUN ls -la
+# Change directory to the swagger-codegen directory before running Maven
+RUN cd swagger-codegen && MAVEN_OPTS="$MAVEN_OPTS" mvn -am -pl "modules/swagger-codegen-cli" package
 
 WORKDIR /data
 
