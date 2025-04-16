@@ -7,6 +7,13 @@ ENV MAVEN_OPTS="-Xms512m -Xmx1024m -XX:MaxPermSize=256m"
 
 RUN apk add --update nodejs git yarn
 
+# Create directory for your files
+RUN mkdir -p /data/input
+
+# Copy files from host into container
+# Note: Files should be in the build context directory
+COPY ./files/ /data/input/
+
 RUN git clone https://github.com/swagger-api/swagger-codegen
 RUN ls -la
 # Change directory to the swagger-codegen directory before running Maven
