@@ -15,7 +15,6 @@ RUN mkdir -p /data/input
 COPY ./files/ /data/input/
 
 RUN git clone https://github.com/swagger-api/swagger-codegen
-RUN ls -la
 # Change directory to the swagger-codegen directory before running Maven
 RUN cd swagger-codegen && MAVEN_OPTS="$MAVEN_OPTS" mvn -am -pl "modules/swagger-codegen-cli" package
 
