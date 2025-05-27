@@ -89,7 +89,27 @@ npm run generate-client:folder [api-repo-name]
 Note that the first time you run `generate-client` it will take several minutes to run as it needs to clone and build `swagger-codegen`.
 
 ## Using Docker
-If you don't want to install java or maven.  Simply run `run-gb-service` in order to go into an interactive shell to generate the .net client.  Once you are in the container run `npm install`.
+If you don't want to install java or maven, you can use Docker:
+
+1. First, build the Docker image:
+```bash
+docker build -t gasbuddy:swagger-csharp-client -f docker/Dockerfile.dev docker
+```
+
+2. For Apple Silicon (M1/M2) Macs, use:
+```bash
+docker build -t gasbuddy:swagger-csharp-client -f docker/Dockerfile.dev docker --platform linux/amd64
+```
+
+3. Run the container interactively:
+```bash
+docker run -it --rm -v $(pwd):/data gasbuddy:swagger-csharp-client
+```
+
+4. Once you are in the container, run:
+```bash
+npm install
+```
 
 ## Generating code from a swagger spec
 In order to generate the code from a swagger spec, you can `npm run generate-from-spec arg1 arg2 arg3`. Where 
@@ -106,8 +126,8 @@ npm run generate-from-spec identity-serv-spec.json identity-serv-client Identity
 2. Window 1: clone poi-api repo, cd into it, and `git checkout c-sharp-client`
 3. Window 1 again: `git checkout -b c-sharp-client-rpm-v2.0.0`
 4. Find the spec file that you want to generate from. This might come from an npm install, or if you have it locally just put it in the swagger-csharp-client project folder for now (e.g. poi-api-spec.json)
-5. Window 2: `run-gb-service`. This puts you in the container
-6. Window 2 (in container): `npm run generate-from-spec poi-api-spec.json poi-api PoiApiClient`
+5. Window 2 [ON Apple Platform]: `docker build -t gasbuddy:swagger-csharp-client -f docker/Dockerfile.dev docker --platform linux/amd64`. This puts you in the container
+6. Window 2 (in container): `yarn run generate-from-spec poi-api-spec.json poi-api PoiApiClient`
 7. Window 1: Verify that the generation was successful (`git status`)
 8. In the nested poi-api folder (Window 1), update the version in appveyor.yml
 9. In the case of poi-api, we need to update src/PoiApiClient/PoiApiApiClient.nuspec, changing the id from poi-api to poi-api-client. You may or may not need to do this, depending on the name of the project in appveyor
@@ -121,4 +141,4 @@ It's a bit difficult to get git working in the container with ssh. So for the ti
 3. Outside the container, add the files, do a PR or a force push or whatever you like.
 
 ## Appveyor integration
-This repo will create an Appveyor.yml file that will get appveyor to build from the c-sharp-client branch.  You will need to add your project to Appveyor an initially set it to look at the c-sharp-client branch.    
+This repo will create an Appveyor.yml file that will get appveyor to build from the c-sharp-client branch.  You will need to add your project to Appveyor an initially set it to look at the c-sharp-client branch.
