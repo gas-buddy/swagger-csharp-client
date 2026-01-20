@@ -137,9 +137,39 @@ var response = await api.GetSomethingAsync();
 }
 ```
 
-## Custom Templates
+## GasBuddy Custom Templates (ConfigurationManager Support)
 
-To customize the generated code (e.g., to add ConfigurationManager support):
+We have custom templates that add `ConfigurationManager.AppSettings` support, similar to the original swagger-csharp-client.
+
+### Using GasBuddy Templates
+
+```bash
+docker run --rm \
+  -v "$(pwd):/local" \
+  openapitools/openapi-generator-cli generate \
+  -i /local/api/my-api-spec.yaml \
+  -g csharp \
+  -o /local/output/my-api-client \
+  -t /local/openapi-templates/csharp-gasbuddy \
+  --additional-properties=packageName=MyApiClient,targetFramework=net48,library=generichost
+```
+
+### Configuration Keys
+
+Add these to your `app.config` or `web.config`:
+
+```xml
+<appSettings>
+  <add key="MyApiClient.Host" value="https://api.example.com" />
+  <add key="MyApiClient.Key" value="your-api-key-here" />
+</appSettings>
+```
+
+See `openapi-templates/csharp-gasbuddy/README.md` for full documentation.
+
+## Creating New Custom Templates
+
+To customize the generated code further:
 
 ### 1. Extract Default Templates
 
