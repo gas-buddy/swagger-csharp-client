@@ -217,7 +217,56 @@ docker run --rm \
 
 ## CI/CD Integration
 
-The generated project includes `appveyor.yml` for AppVeyor CI. For other CI systems:
+### AppVeyor with GasBuddy Templates
+
+To use the centralized GasBuddy templates from the `swagger-csharp-client` repo in your API's AppVeyor build:
+
+```yaml
+# appveyor.yml
+image: Visual Studio 2022
+
+environment:
+  PACKAGE_NAME: MyApiClient
+  PACKAGE_VERSION: 1.0.0
+
+install:
+  # Clone swagger-csharp-client to get the templates
+  - git clone --depth 1 https://github.com/gas-buddy/swagger-csharp-client.git templates-repo
+
+build_script:
+  # Bundle the OpenAPI spec (if using multiple files)
+  - npx @redocly/cli bundle api/my-api.yaml -o api/my-api-spec.yaml
+
+  # Generate C# client with GasBuddy templates
+  - docker run --rm -v "%CD%:/local" openapitools/openapi-generator-cli generate
+      -i /local/api/my-api-spec.yaml
+      -g csharp
+      -o /local/csharp-client
+      -t /local/templates-repo/openapi-templates/csharp-gasbuddy
+      --additional-properties=packageName=%PACKAGE_NAME%,targetFramework=net48,library=generichost,packageVersion=%PACKAGE_VERSION%
+
+  # Build the generated client
+  - cd csharp-client
+  - dotnet restore
+  - dotnet build -c Release
+
+artifacts:
+  - path: csharp-client\src\%PACKAGE_NAME%\bin\Release\**\*.dll
+    name: NuGet Package
+
+deploy:
+  provider: NuGet
+  api_key:
+    secure: <your-encrypted-api-key>
+  on:
+    branch: main
+```
+
+### Key Points
+
+1. **Clone templates repo**: The build clones `swagger-csharp-client` to access the GasBuddy templates
+2. **Template path**: Use `-t /local/templates-repo/openapi-templates/csharp-gasbuddy`
+3. **Library setting**: Must include `library=generichost` for the custom templates
 
 ### GitHub Actions Example
 
@@ -235,6 +284,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clone GasBuddy templates
+        run: git clone --depth 1 https://github.com/gas-buddy/swagger-csharp-client.git templates-repo
+
       - name: Generate C# Client
         run: |
           docker run --rm \
@@ -243,7 +295,8 @@ jobs:
             -i /local/api/my-api-spec.yaml \
             -g csharp \
             -o /local/client \
-            --additional-properties=packageName=MyApiClient,targetFramework=net48
+            -t /local/templates-repo/openapi-templates/csharp-gasbuddy \
+            --additional-properties=packageName=MyApiClient,targetFramework=net48,library=generichost
 
       - name: Build Client
         run: dotnet build client/MyApiClient.sln
